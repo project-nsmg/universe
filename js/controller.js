@@ -12,26 +12,26 @@ function Controller(particles) {
 
     var _this = this,
         canvas = particles.igloo.gl.canvas;
-    $(canvas).on('mousemove', function(event) {
-        var coords = Controller.coords(event);
-        _this.obstacle.position[0] = coords[0];
-        _this.obstacle.position[1] = coords[1];
-        _this.obstacle.enabled = true;
-        particles.updateObstacles();
-        if (_this.mousedown) _this.place();
-    });
-    $(canvas).on('mouseout', function() {
-        _this.obstacle.enabled = false;
-        particles.updateObstacles();
-        _this.mousedown = false;
-    });
-    $(canvas).on('mousedown', function() {
-        _this.mousedown = true;
-    });
-    $(canvas).on('mouseup', function(event) {
-        if (event.which === 1) _this.place();
-        _this.mousedown = false;
-    });
+    // $(canvas).on('mousemove', function(event) {
+    //     var coords = Controller.coords(event);
+    //     _this.obstacle.position[0] = coords[0];
+    //     _this.obstacle.position[1] = coords[1];
+    //     _this.obstacle.enabled = true;
+    //     particles.updateObstacles();
+    //     if (_this.mousedown) _this.place();
+    // });
+    // $(canvas).on('mouseout', function() {
+    //     _this.obstacle.enabled = false;
+    //     particles.updateObstacles();
+    //     _this.mousedown = false;
+    // });
+    // $(canvas).on('mousedown', function() {
+    //     _this.mousedown = true;
+    // });
+    // $(canvas).on('mouseup', function(event) {
+    //     if (event.which === 1) _this.place();
+    //     _this.mousedown = false;
+    // });
     $(window).on('keyup', function(event) {
         switch (event.which) {
         case 67: // c
@@ -45,6 +45,12 @@ function Controller(particles) {
             break;
         }
     });
+
+    $(window).on('resize', function(event) {
+        $(canvas).height = window.innerHeight;
+        $(canvas).width  = window.innerWidth;
+    });
+
     this.controls = {
         increase: $('.controls .increase').on('click', function() {
             _this.adjust(2);
