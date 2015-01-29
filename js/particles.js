@@ -43,11 +43,11 @@ function Particles(canvas, nparticles, size) {
     }
 
     this.programs = {
-        update:  igloo.program('glsl/quad.vert', 'glsl/update.frag'),
+        update:  igloo.program('glsl/models/index.vert', 'glsl/update.frag'),
         draw:    igloo.program('glsl/draw.vert', 'glsl/draw.frag'),
-        flat:    igloo.program('glsl/quad.vert', 'glsl/flat.frag'),
+        flat:    igloo.program('glsl/models/index.vert', 'glsl/flat.frag'),
         ocircle: igloo.program('glsl/ocircle.vert', 'glsl/ocircle.frag'),
-        gravity: igloo.program('glsl/gravity.vert', 'glsl/gravity.frag')
+        gravity: igloo.program('glsl/models/screen.vert', 'glsl/gravity.frag')
     };
     this.buffers = {
         quad: igloo.array(Igloo.QUAD2),
