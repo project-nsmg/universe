@@ -6,6 +6,9 @@ web:
     - mongo
   environment:
     MONGOHQ_URL: mongodb://mongo/universe
+  command: rerun 'rackup --host 0.0.0.0 --port 4567'
+  volumes:
+    - ".:/app"
 mongo:
   image: mongo
   volumes:

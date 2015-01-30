@@ -1,115 +1,176 @@
 
-function initialize_compressor() {
-	compressor=new LZMA( "js/lzma_worker.js" );
-	return compressor;
+var saveButton, forkButton, parentButton, diffButton;
+var effect_owner=false;
+var original_code='';
+var original_version='';
+
+function initialize_compressor(){
+	return null;
 }
 
 function initialize_helper() {
+	window.onhashchange = function() { load_url_code(); };
+
+	if (typeof localStorage !== 'undefined') {
+		if ( !localStorage.getItem('glslsandbox_user') ) {
+			localStorage.setItem('glslsandbox_user', generate_user_id());
+		}
+	} else {
+		// This fallback shouldn't be used by any browsers that are able to commit code.
+		localStorage = { getItem: function(x) { return 'invalid_user'; } };
+	}
+}
+
+function generate_user_id() {
+	return (Math.random()*0x10000000|0).toString(16);
+}
+
+function get_user_id() {
+	return localStorage.getItem('glslsandbox_user');
+}
+
+function am_i_owner() {
+	return (effect_owner && effect_owner==get_user_id());
 }
 
 function load_url_code() {
-	if ( window.location.hash ) {
+	if ( window.location.hash!='') {
 
-		var hash = window.location.hash.substr( 1 );
-		var version = hash.substr( 0, 2 );
-
-		if ( version == 'A/' ) {
-
-			// LZMA
-
-			readURL( hash.substr( 2 ) );
-
-		} else {
-
-			// Basic format
-
-			code.value = decodeURIComponent( hash );
-
-		}
+		load_code(window.location.hash.substr(1));
 
 	} else {
 
-		readURL( '5d000001009a0200000000000000119a48c65ab5aec1f910f780dfdfe473e599a211a90304ab6aa581b342b344db4e71099beb79352b3c442c8dee970ffb4d054491e356b4f55882c2f3554393fe6662cf2c348a3f51dcce7b5760290bbc5c1b937d382ba6cdd0a9b35cf7fd57cebd800501c16f80f61ad4501d00a2ca4e63c8dc38b7b03703cba8d68914c6f2c6598f2f7008faee0e4b4cf4276eea6d0fb93df9188dae5b7f6db2579246363efaf9145f13206ee5b908e90eb4f6e19254a0f4fda81b31c2d3fd00e78e5b5fb5d5e51df87412a667211e121d77f3becd58d5960f9b77d8b826d4c6bce27a589f7158944441ae8fa5a297f23f0e7707f84fcbe0557976aaca9c97b99d3252a8b85b2a4ecb10d9b3cb65f6a5d75240f8bde39ed692b559c61276fe260578' );
+		code.setValue(document.getElementById( 'example' ).text);
+		original_code = document.getElementById( 'example' ).text;
 
 	}
-}
-
-function setURL( shaderString ) {
-
-	compressor.compress( shaderString, 1, function( bytes ) {
-
-		var hex = convertBytesToHex( bytes );
-		window.location.replace( '#A/' + hex );
-
-	},
-	dummyFunction );
-
-}
-
-function readURL( hash ) {
-
-	var bytes = convertHexToBytes( hash );
-
-	compressor.decompress( bytes, function( text ) {
-
-		compileOnChangeCode = false;  // Prevent compile timer start
-		code.setValue(text);
-		compile();
-		compileOnChangeCode = true;
-
-	},
-	dummyFunction );
-
-}
-
-function convertHexToBytes( text ) {
-
-	var tmpHex, array = [];
-
-	for ( var i = 0; i < text.length; i += 2 ) {
-
-		tmpHex = text.substring( i, i + 2 );
-		array.push( parseInt( tmpHex, 16 ) );
-
-	}
-
-	return array;
-
-}
-
-function convertBytesToHex( byteArray ) {
-
-	var tmpHex, hex = "";
-
-	for ( var i = 0, il = byteArray.length; i < il; i ++ ) {
-
-		if ( byteArray[ i ] < 0 ) {
-
-			byteArray[ i ] = byteArray[ i ] + 256;
-
-		}
-
-		tmpHex = byteArray[ i ].toString( 16 );
-
-		// add leading zero
-
-		if ( tmpHex.length == 1 ) tmpHex = "0" + tmpHex;
-
-		hex += tmpHex;
-
-	}
-
-	return hex;
-
-}
-
-// dummy functions for saveButton
-function set_save_button(visibility) {
-}
-
-function set_parent_button(visibility) {
 }
 
 function add_server_buttons() {
+	saveButton = document.createElement( 'button' );
+	saveButton.style.visibility = 'hidden';
+	saveButton.textContent = 'save';
+	saveButton.addEventListener( 'click', save, false );
+	toolbar.appendChild( saveButton );
+
+	parentButton = document.createElement( 'a' );
+	parentButton.style.visibility = 'hidden';
+	parentButton.textContent = 'parent';
+	parentButton.href = original_version;
+	toolbar.appendChild( parentButton );
+
+	diffButton = document.createElement( 'a' );
+	diffButton.style.visibility = 'hidden';
+	diffButton.textContent = 'diff';
+	diffButton.href = '/';
+	toolbar.appendChild( diffButton );
+
+	set_parent_button('visible');
+}
+
+function set_save_button(visibility) {
+	if(original_code==code.getValue())
+		saveButton.style.visibility = 'hidden';
+	else
+		saveButton.style.visibility = visibility;
+}
+
+function set_parent_button(visibility) {
+	if(original_version=='') {
+		parentButton.style.visibility = 'hidden';
+		diffButton.style.visibility = 'hidden';
+	} else {
+		parentButton.style.visibility = visibility;
+		diffButton.style.visibility = visibility;
+	}
+}
+
+
+function get_img( width, height ) {
+	canvas.width = width;
+	canvas.height = height;
+	parameters.screenWidth = width;
+	parameters.screenHeight = height;
+
+	gl.viewport( 0, 0, width, height );
+	createRenderTargets();
+	resetSurface();
+
+	render();
+
+	img=canvas.toDataURL('image/png');
+
+	onWindowResize();
+
+	return img;
+}
+
+function save() {
+	img=get_img(200, 100);
+
+	data={
+		"code": code.getValue(),
+		"image": img,
+		"user": get_user_id()
+	}
+
+	loc='/e';
+
+	if(am_i_owner())
+		data["code_id"]=window.location.hash.substr(1);
+	else {
+		data["parent"]=window.location.hash.substr(1);
+	}
+
+	$.post(loc,
+		JSON.stringify(data),
+		function(result) {
+			window.location.replace('/e#'+result);
+			load_url_code();
+		}, "text");
+}
+
+function load_code(hash) {
+	if (gl) {
+		compileButton.title = '';
+		compileButton.style.color = '#ffff00';
+		compileButton.textContent = 'Loading...';
+	}
+	set_save_button('hidden');
+	set_parent_button('hidden');
+
+	$.getJSON('/item/'+hash, function(result) {
+		compileOnChangeCode = false;  // Prevent compile timer start
+		code.setValue(result['code']);
+		original_code=code.getValue();
+
+		if(result['parent']) {
+			original_version=result['parent'];
+			parentButton.href = original_version;
+			diffButton.href = 'diff#' + original_version.substring(3) + '-vs-' + hash;
+			set_parent_button('visible');
+		} else {
+			original_version='';
+			parentButton.href = '/';
+			diffButton.href = '/';
+			set_parent_button('hidden');
+		}
+
+		effect_owner=result['user'];
+
+		if(am_i_owner())
+			saveButton.textContent = 'save';
+		else
+			saveButton.textContent = 'fork';
+
+		resetSurface();
+		compile();
+		compileOnChangeCode = true;
+	});
+}
+
+// dummy functions
+
+function setURL(fragment) {
 }
 
