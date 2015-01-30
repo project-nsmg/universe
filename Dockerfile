@@ -1,7 +1,13 @@
 FROM ruby:2
-MAINTAINER sorpa'as plat (me@sorpaas.com)
 
-RUN mkdir -p /app
-ADD . /app
+RUN mkdir /app
 WORKDIR /app
-CMD ruby -run -e httpd . -p 9090
+
+RUN gem install bundler
+ADD Gemfile /app/Gemfile
+RUN bundle install
+
+CMD rackup --host 0.0.0.0 --port 4567
+EXPOSE 4567
+
+ADD . /app

@@ -1,6 +1,12 @@
 web:
   build: .
   ports:
-    - 9090:9090
+    - "5068:4567"
+  links:
+    - mongo
+  environment:
+    MONGOHQ_URL: mongodb://mongo/universe
+mongo:
+  image: mongo
   volumes:
-    - ".:/app"
+    - ".docker/mongo:/data/db"
