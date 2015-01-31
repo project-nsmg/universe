@@ -1,13 +1,7 @@
 FROM ruby:2
+MAINTAINER sorpa'as plat (me@sorpaas.com)
 
-RUN mkdir /app
-WORKDIR /app
-
-RUN gem install bundler
-ADD Gemfile /app/Gemfile
-RUN bundle install
-
-CMD rackup --host 0.0.0.0 --port 4567
-EXPOSE 4567
-
+RUN mkdir -p /app
 ADD . /app
+WORKDIR /app
+CMD ruby -run -e httpd . -p 9090
