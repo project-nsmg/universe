@@ -5,4 +5,4 @@ gem 'mongo'
 gem 'bson_ext'
 gem 'json'
 gem 'cloudinary'
-gem 'rerun'
+
